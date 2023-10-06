@@ -8,3 +8,6 @@ default = ["boxed-nodes", "examples-movies", "examples-london"]
 boxed-nodes = []
 examples-movies = []
 examples-london = []
+
+[dependencies]
+thiserror = "1.0.49"

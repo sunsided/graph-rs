@@ -1,6 +1,8 @@
+mod bfs;
 mod examples;
 mod node_address;
 
+pub use crate::bfs::BreadthFirstSearch;
 use crate::node_address::NodeAddress;
 use std::borrow::Borrow;
 use std::ops::{Deref, DerefMut};
@@ -17,8 +19,35 @@ struct Node<T, R>(Box<NodeData<T, R>>);
 #[cfg(not(feature = "boxed-nodes"))]
 struct Node<T>(NodeData<T>);
 
-#[derive(Debug)]
-struct NodeRelation<R>(R, NodeAddress);
+#[derive(Debug, Clone)]
+struct NodeRelation<R> {
+    relation: R,
+    address: NodeAddress,
+}
+
+#[derive(Debug, Clone)]
+pub struct NodePathLink<R>
+where
+    R: Clone,
+{
+    /// The type of relation. This value is virtually always set, except for pathfinding
+    /// cases where the start node does not have a means of "getting to it".
+    relation: Option<R>,
+    /// The address of the target node.
+    address: NodeAddress,
+}
+
+impl<R> From<&NodeRelation<R>> for NodePathLink<R>
+where
+    R: Clone,
+{
+    fn from(value: &NodeRelation<R>) -> Self {
+        NodePathLink {
+            relation: Some(value.relation.clone()),
+            address: value.address.clone(),
+        }
+    }
+}
 
 impl<T, R> From<NodeData<T, R>> for Node<T, R> {
     fn from(value: NodeData<T, R>) -> Self {
@@ -68,6 +97,15 @@ impl<T, R> Graph<T, R> {
         NodeAddress::from_local(id)
     }
 
+    /// Gets a node given its [`NodeAddress`] under the condition that the node is locally available.
+    fn get_local_node(&self, address: &NodeAddress) -> Result<&NodeData<T, R>, NodeAddressError> {
+        #[allow(unreachable_patterns)]
+        match address {
+            NodeAddress::Local(id) => Ok(&self.nodes[*id]),
+            _ => Err(NodeAddressError::NodeNotLocal(address.clone())),
+        }
+    }
+
     /// Creates a connection between the nodes at the `from` address and the `to` address.
     ///
     /// * The `from` node will receive an outgoing connection to the `to` node.
@@ -81,9 +119,10 @@ impl<T, R> Graph<T, R> {
         let from = from.borrow();
         let to = to.borrow();
         match from {
-            NodeAddress::Local(from_idx) => self.nodes[*from_idx]
-                .outgoing
-                .push(NodeRelation(relation, to.clone())),
+            NodeAddress::Local(from_idx) => self.nodes[*from_idx].outgoing.push(NodeRelation {
+                relation,
+                address: to.clone(),
+            }),
         }
     }
 
@@ -109,6 +148,12 @@ impl<T, R> Default for Graph<T, R> {
     fn default() -> Self {
         Graph { nodes: Vec::new() }
     }
+}
+
+#[derive(Debug, Clone, thiserror::Error)]
+pub enum NodeAddressError {
+    #[error("The specified node address does not represent a local node: {0}")]
+    NodeNotLocal(NodeAddress),
 }
 
 #[cfg(test)]

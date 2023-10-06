@@ -10,7 +10,7 @@ pub struct Station {
     id: usize,
 }
 
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub enum ConnectionType {
     /// A subway line.
     Underground,

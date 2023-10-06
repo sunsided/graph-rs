@@ -10,7 +10,7 @@ pub enum NodeType {
     Person(Person),
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum RelationType {
     /// Person acted in movie
     ActedIn(ActedIn),
@@ -39,12 +39,12 @@ pub struct Movie {
     tagline: String,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct ActedIn {
     roles: Vec<String>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Review {
     summary: String,
     rating: u8,
