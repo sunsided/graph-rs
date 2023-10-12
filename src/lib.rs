@@ -1,3 +1,4 @@
+mod astar;
 mod bfs;
 mod dfs;
 mod examples;
@@ -100,7 +101,10 @@ impl<T, R> Graph<T, R> {
     }
 
     /// Gets a node given its [`NodeAddress`] under the condition that the node is locally available.
-    fn get_local_node(&self, address: &NodeAddress) -> Result<&NodeData<T, R>, NodeAddressError> {
+    fn get_local_node_ref(
+        &self,
+        address: &NodeAddress,
+    ) -> Result<&NodeData<T, R>, NodeAddressError> {
         #[allow(unreachable_patterns)]
         match address {
             NodeAddress::Local(id) => Ok(&self.nodes[*id]),

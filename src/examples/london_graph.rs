@@ -2,6 +2,7 @@
 
 #![allow(dead_code)]
 
+use crate::astar::Heuristic;
 use crate::node_address::NodeAddress;
 use crate::Graph;
 
@@ -27,13 +28,22 @@ pub enum ConnectionType {
     Taxi,
 }
 
+/// Heuristic for the London Graph
+#[derive(Default, Copy, Clone)]
+pub struct LondonGraphLocationHeuristic;
+
+impl Heuristic<Station> for LondonGraphLocationHeuristic {
+    fn heuristic(&self, from: &Station, to: &Station) -> f32 {
+        let x = from.x as f32 - to.x as f32;
+        let y = from.y as f32 - to.y as f32;
+        x * x + y * y
+    }
+}
+
 pub fn london_graph() -> Graph<Station, ConnectionType> {
     let mut graph = Graph::default();
 
-    let stations: Vec<_> = (1..=199)
-        .into_iter()
-        .map(|id| graph.add(Station { id, x: 0, y: 0 }))
-        .collect();
+    let stations = stations(&mut graph);
 
     connect_taxi(&mut graph, &stations);
     connect_bus(&mut graph, &stations);
@@ -264,6 +274,9 @@ fn stations(graph: &mut Graph<Station, ConnectionType>) -> Vec<NodeAddress> {
         Station { id: 197, x: 352, y: 515 },
         Station { id: 198, x: 515, y: 545 },
         Station { id: 199, x: 600, y: 530 },
+
+        // A secret node that cannot be reached.
+        Station { id: 200, x: 600, y: 600 },
     ];
 
     return stations
