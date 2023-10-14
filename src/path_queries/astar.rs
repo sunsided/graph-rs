@@ -7,7 +7,7 @@ use std::collections::HashMap;
 pub struct AStarSearch;
 
 /// Trait for heuristics.
-pub trait Heuristic<N> {
+pub trait AdmissibleHeuristic<N> {
     /// Provides a heuristic value for the estimated cost to the target node.
     ///
     /// ## Admissible Heuristics
@@ -48,7 +48,7 @@ impl AStarSearch {
     where
         R: Clone,
         P: PathCost<N, R>,
-        H: Heuristic<N>,
+        H: AdmissibleHeuristic<N>,
     {
         // The set of nodes to be evaluated
         let mut open_set = OpenSet::default();

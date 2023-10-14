@@ -3,7 +3,7 @@
 #![allow(dead_code)]
 
 use crate::node_address::NodeAddress;
-use crate::path_queries::astar::{Heuristic, PathCost};
+use crate::path_queries::astar::{AdmissibleHeuristic, PathCost};
 use crate::Graph;
 
 const MAP_WIDTH: f32 = 760.0;
@@ -43,7 +43,7 @@ pub struct LondonGraphDistanceCost;
 #[derive(Default, Copy, Clone)]
 pub struct LondonGraphStationsCost;
 
-impl Heuristic<Station> for LondonGraphDistanceHeuristic {
+impl AdmissibleHeuristic<Station> for LondonGraphDistanceHeuristic {
     fn heuristic(&self, from: &Station, to: &Station) -> f32 {
         let x = (from.x as f32 - to.x as f32) / MAP_WIDTH;
         let y = (from.y as f32 - to.y as f32) / MAP_HEIGHT;
