@@ -2,8 +2,8 @@
 
 #![allow(dead_code)]
 
-use crate::astar::{Heuristic, PathCost};
 use crate::node_address::NodeAddress;
+use crate::path_queries::astar::{Heuristic, PathCost};
 use crate::Graph;
 
 const MAP_WIDTH: f32 = 760.0;

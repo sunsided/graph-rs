@@ -1,11 +1,7 @@
-mod astar;
-mod bfs;
-mod dfs;
 mod examples;
 mod node_address;
+mod path_queries;
 
-pub use crate::bfs::BreadthFirstSearch;
-pub use crate::dfs::DepthFirstSearch;
 use crate::node_address::NodeAddress;
 use std::borrow::Borrow;
 use std::ops::{Deref, DerefMut};
