@@ -8,11 +8,20 @@ pub struct AStarSearch;
 
 /// Trait for heuristics.
 pub trait Heuristic<N> {
-    /// Provides a heuristic value for the cost to the target node.
+    /// Provides a heuristic value for the estimated cost to the target node.
     ///
     /// ## Admissible Heuristics
     /// The heuristic function must be admissible, i.e. never overestimate the true distance.
     fn heuristic(&self, from: &N, to: &N) -> f32;
+}
+
+/// Trait for path costs.
+pub trait PathCost<N, R> {
+    /// Provides a value for the actual cost to the target node.
+    ///
+    /// This function is mainly used to determine the cost to move to a neighbor node.
+    /// If there is no path to the target node, the returned cost should be [`f32::INFINITY`].
+    fn path_cost(&self, from: &N, to: &N, relation: &R) -> f32;
 }
 
 impl AStarSearch {
@@ -28,15 +37,17 @@ impl AStarSearch {
     /// ## Returns
     ///
     /// A path from `start` to `target` or an empty vector if no such path exists.
-    pub fn shortest_path<N, R, H>(
+    pub fn shortest_path<N, R, P, H>(
         &self,
         graph: &Graph<N, R>,
         start: NodeAddress,
         target: NodeAddress,
+        path_cost: &P,
         heuristic: &H,
     ) -> Vec<NodePathLink<R>>
     where
         R: Clone,
+        P: PathCost<N, R>,
         H: Heuristic<N>,
     {
         // The set of nodes to be evaluated
@@ -81,11 +92,19 @@ impl AStarSearch {
                 .expect("current node has no g-score");
 
             // Process all neighbors of the current node.
-            let current_node = graph.get_local_node_ref(&current_addr).unwrap();
-            for neighbor in current_node.outgoing.iter() {
-                // TODO: Provide proper distance between the current node and the neighbor; right now, we consider the cost of
-                //       moving from the current node to the neighbor to be one unit step.
-                let distance_cost = 1.0;
+            let current_node_data = graph.get_local_node_ref(&current_addr).unwrap();
+            for neighbor in current_node_data.outgoing.iter() {
+                let neighbor_node = &graph
+                    .get_local_node_ref(&neighbor.address)
+                    .expect("the neighbor node does not exist in the graph")
+                    .data;
+
+                // Determine actual distance between the current node and the neighbor.
+                let distance_cost = path_cost.path_cost(
+                    &current_node_data.data,
+                    &neighbor_node,
+                    &neighbor.relation,
+                );
 
                 // Determine the true distance to the neighbor node from the current node.
                 let tentative_g_score = current_g_score + distance_cost;
@@ -115,15 +134,13 @@ impl AStarSearch {
                     // node towards the goal node.
                     let neighbor_f_score = neighbor_g_score
                         + heuristic.heuristic(
-                            &graph
-                                .get_local_node_ref(&neighbor.address)
-                                .expect("the neighbor node does not exist in the graph")
-                                .data,
+                            &neighbor_node,
                             &graph
                                 .get_local_node_ref(&target)
                                 .expect("the target node does not exist in the graph")
                                 .data,
                         );
+                    debug_assert!(neighbor_f_score.is_finite());
 
                     // Update the open set.
                     open_set.insert(neighbor.address.clone(), neighbor_f_score);
@@ -203,22 +220,58 @@ where
 mod tests {
     use super::*;
     use crate::examples::london_graph::{
-        london_graph, ConnectionType, LondonGraphLocationHeuristic,
+        london_graph, ConnectionType, LondonGraphDistanceCost, LondonGraphDistanceHeuristic,
+        LondonGraphStationsCost,
     };
 
     #[test]
-    fn it_works() {
+    fn with_stations_cost() {
         let solver = AStarSearch::default();
         let graph = london_graph();
-        let heuristic = LondonGraphLocationHeuristic::default();
+        let heuristic = LondonGraphDistanceHeuristic::default();
+        let path_cost = LondonGraphStationsCost::default();
         let path = solver.shortest_path(
             &graph,
             NodeAddress::from_local(0),
             NodeAddress::from_local(198),
+            &path_cost,
             &heuristic,
         );
 
-        assert_eq!(path.len(), 9);
+        assert_eq!(path.len(), 6);
+        assert_eq!(path[0].address, NodeAddress::Local(0));
+
+        assert_eq!(path[1].address, NodeAddress::Local(45));
+        assert_eq!(path[1].relation, Some(ConnectionType::Bus));
+
+        assert_eq!(path[2].address, NodeAddress::Local(12));
+        assert_eq!(path[2].relation, Some(ConnectionType::Underground));
+
+        assert_eq!(path[3].address, NodeAddress::Local(88));
+        assert_eq!(path[3].relation, Some(ConnectionType::Underground));
+
+        assert_eq!(path[4].address, NodeAddress::Local(127));
+        assert_eq!(path[4].relation, Some(ConnectionType::Underground));
+
+        assert_eq!(path[5].address, NodeAddress::Local(198));
+        assert_eq!(path[5].relation, Some(ConnectionType::Bus));
+    }
+
+    #[test]
+    fn with_distance_cost() {
+        let solver = AStarSearch::default();
+        let graph = london_graph();
+        let heuristic = LondonGraphDistanceHeuristic::default();
+        let path_cost = LondonGraphDistanceCost::default();
+        let path = solver.shortest_path(
+            &graph,
+            NodeAddress::from_local(0),
+            NodeAddress::from_local(198),
+            &path_cost,
+            &heuristic,
+        );
+
+        assert_eq!(path.len(), 10);
         assert_eq!(path[0].address, NodeAddress::Local(0));
 
         assert_eq!(path[1].address, NodeAddress::Local(45));
@@ -233,31 +286,69 @@ mod tests {
         assert_eq!(path[4].address, NodeAddress::Local(152));
         assert_eq!(path[4].relation, Some(ConnectionType::Underground));
 
-        assert_eq!(path[5].address, NodeAddress::Local(184));
-        assert_eq!(path[5].relation, Some(ConnectionType::Underground));
+        assert_eq!(path[5].address, NodeAddress::Local(183));
+        assert_eq!(path[5].relation, Some(ConnectionType::Bus));
 
-        assert_eq!(path[6].address, NodeAddress::Local(186));
-        assert_eq!(path[6].relation, Some(ConnectionType::Bus));
+        assert_eq!(path[6].address, NodeAddress::Local(184));
+        assert_eq!(path[6].relation, Some(ConnectionType::Taxi));
 
-        assert_eq!(path[7].address, NodeAddress::Local(187));
-        assert_eq!(path[7].relation, Some(ConnectionType::Taxi));
+        assert_eq!(path[7].address, NodeAddress::Local(186));
+        assert_eq!(path[7].relation, Some(ConnectionType::Bus));
 
-        assert_eq!(path[8].address, NodeAddress::Local(198));
+        assert_eq!(path[8].address, NodeAddress::Local(187));
         assert_eq!(path[8].relation, Some(ConnectionType::Taxi));
+
+        assert_eq!(path[9].address, NodeAddress::Local(198));
+        assert_eq!(path[9].relation, Some(ConnectionType::Taxi));
     }
 
     #[test]
     fn unreachable() {
         let solver = AStarSearch::default();
         let graph = london_graph();
-        let heuristic = LondonGraphLocationHeuristic::default();
+        let heuristic = LondonGraphDistanceHeuristic::default();
+        let path_cost = LondonGraphDistanceCost::default();
         let path = solver.shortest_path(
             &graph,
             NodeAddress::from_local(0),
             NodeAddress::from_local(199),
+            &path_cost,
             &heuristic,
         );
 
         assert_eq!(path.len(), 0);
+    }
+
+    #[test]
+    fn ferries() {
+        let solver = AStarSearch::default();
+        let graph = london_graph();
+        let heuristic = LondonGraphDistanceHeuristic::default();
+        let path_cost = LondonGraphStationsCost::default();
+        let path = solver.shortest_path(
+            &graph,
+            NodeAddress::from_local(191),
+            NodeAddress::from_local(118),
+            &path_cost,
+            &heuristic,
+        );
+
+        assert_eq!(path.len(), 6);
+        assert_eq!(path[0].address, NodeAddress::Local(191));
+
+        assert_eq!(path[1].address, NodeAddress::Local(193));
+        assert_eq!(path[1].relation, Some(ConnectionType::Taxi));
+
+        assert_eq!(path[2].address, NodeAddress::Local(156));
+        assert_eq!(path[2].relation, Some(ConnectionType::Ferry));
+
+        assert_eq!(path[3].address, NodeAddress::Local(114));
+        assert_eq!(path[3].relation, Some(ConnectionType::Ferry));
+
+        assert_eq!(path[4].address, NodeAddress::Local(107));
+        assert_eq!(path[4].relation, Some(ConnectionType::Ferry));
+
+        assert_eq!(path[5].address, NodeAddress::Local(118));
+        assert_eq!(path[5].relation, Some(ConnectionType::Taxi));
     }
 }

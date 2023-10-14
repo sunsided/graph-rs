@@ -146,7 +146,7 @@ impl<T, R> Graph<T, R> {
         R: Clone,
     {
         self.link_to(from.borrow(), to.borrow(), relation.clone());
-        self.link_to(to.borrow(), from.borrow(), relation.clone());
+        self.link_to(to.borrow(), from.borrow(), relation);
     }
 }
 

@@ -2,17 +2,20 @@
 
 #![allow(dead_code)]
 
-use crate::astar::Heuristic;
+use crate::astar::{Heuristic, PathCost};
 use crate::node_address::NodeAddress;
 use crate::Graph;
+
+const MAP_WIDTH: f32 = 760.0;
+const MAP_HEIGHT: f32 = 570.0;
 
 #[derive(Debug)]
 pub struct Station {
     /// The station ID
     id: usize,
-    /// The X coordinate of the station on the map, in 0..=768
+    /// The X coordinate of the station on the map, in 0..=MAP_WIDTH
     x: usize,
-    /// The Y coordinate of the station on the map, in 0..=512
+    /// The Y coordinate of the station on the map, in 0..=MAP_HEIGHT
     y: usize,
 }
 
@@ -30,13 +33,36 @@ pub enum ConnectionType {
 
 /// Heuristic for the London Graph
 #[derive(Default, Copy, Clone)]
-pub struct LondonGraphLocationHeuristic;
+pub struct LondonGraphDistanceHeuristic;
 
-impl Heuristic<Station> for LondonGraphLocationHeuristic {
+/// Costs for the London Graph
+#[derive(Default, Copy, Clone)]
+pub struct LondonGraphDistanceCost;
+
+/// Costs for the London Graph
+#[derive(Default, Copy, Clone)]
+pub struct LondonGraphStationsCost;
+
+impl Heuristic<Station> for LondonGraphDistanceHeuristic {
     fn heuristic(&self, from: &Station, to: &Station) -> f32 {
-        let x = from.x as f32 - to.x as f32;
-        let y = from.y as f32 - to.y as f32;
+        let x = (from.x as f32 - to.x as f32) / MAP_WIDTH;
+        let y = (from.y as f32 - to.y as f32) / MAP_HEIGHT;
         x * x + y * y
+    }
+}
+
+impl PathCost<Station, ConnectionType> for LondonGraphDistanceCost {
+    fn path_cost(&self, from: &Station, to: &Station, _relation: &ConnectionType) -> f32 {
+        let x = (from.x as f32 - to.x as f32) / MAP_WIDTH;
+        let y = (from.y as f32 - to.y as f32) / MAP_HEIGHT;
+        x * x + y * y
+    }
+}
+
+impl PathCost<Station, ConnectionType> for LondonGraphStationsCost {
+    fn path_cost(&self, _from: &Station, _to: &Station, _relation: &ConnectionType) -> f32 {
+        // assuming they are neighbors
+        1.0
     }
 }
 
@@ -56,7 +82,7 @@ pub fn london_graph() -> Graph<Station, ConnectionType> {
 fn stations(graph: &mut Graph<Station, ConnectionType>) -> Vec<NodeAddress> {
     #[rustfmt::skip]
     let stations = [
-        Station { id: 1, x: 110, y: 30 },
+        Station { id: 1, x: 110, y: 32 },
         Station { id: 2, x: 250, y: 35 },
         Station { id: 3, x: 302, y: 27 },
         Station { id: 4, x: 375, y: 30 },
@@ -69,7 +95,7 @@ fn stations(graph: &mut Graph<Station, ConnectionType>) -> Vec<NodeAddress> {
         Station { id: 10, x: 262, y: 70 },
         Station { id: 11, x: 302, y: 62 },
         Station { id: 12, x: 340, y: 65 },
-        Station { id: 13, x: 405, y: 67 },
+        Station { id: 13, x: 403, y: 67 },
         Station { id: 14, x: 467, y: 47 },
         Station { id: 15, x: 525, y: 35 },
         Station { id: 16, x: 596, y: 67 },
@@ -105,7 +131,7 @@ fn stations(graph: &mut Graph<Station, ConnectionType>) -> Vec<NodeAddress> {
         Station { id: 43, x: 34, y: 135 },
         Station { id: 44, x: 92, y: 145 },
         Station { id: 45, x: 160, y: 155 },
-        Station { id: 46, x: 210, y: 150 },
+        Station { id: 46, x: 207, y: 149 },
         Station { id: 47, x: 245, y: 132 },
         Station { id: 48, x: 285, y: 157 },
         Station { id: 49, x: 365, y: 167 },
@@ -177,7 +203,7 @@ fn stations(graph: &mut Graph<Station, ConnectionType>) -> Vec<NodeAddress> {
         Station { id: 109, x: 250, y: 305 },
 
         Station { id: 110, x: 280, y: 380 },
-        Station { id: 111, x: 290, y: 310 },
+        Station { id: 111, x: 290, y: 308 },
         Station { id: 112, x: 320, y: 292 },
         Station { id: 113, x: 360, y: 305 },
         Station { id: 114, x: 395, y: 305 },
@@ -223,7 +249,7 @@ fn stations(graph: &mut Graph<Station, ConnectionType>) -> Vec<NodeAddress> {
         Station { id: 150, x: 225, y: 375 },
         Station { id: 151, x: 250, y: 397 },
         Station { id: 152, x: 275, y: 375 },
-        Station { id: 153, x: 295, y: 405 },
+        Station { id: 153, x: 296, y: 406 },
         Station { id: 154, x: 345, y: 390 },
         Station { id: 155, x: 367, y: 410 },
         Station { id: 156, x: 395, y: 420 },
@@ -257,10 +283,10 @@ fn stations(graph: &mut Graph<Station, ConnectionType>) -> Vec<NodeAddress> {
         Station { id: 181, x: 275, y: 467 },
         Station { id: 182, x: 295, y: 490 },
         Station { id: 183, x: 315, y: 462 },
-        Station { id: 184, x: 390, y: 480 },
-        Station { id: 185, x: 445, y: 520 },
+        Station { id: 184, x: 390, y: 482 },
+        Station { id: 185, x: 446, y: 520 },
         Station { id: 186, x: 285, y: 502 },
-        Station { id: 187, x: 542, y: 517 },
+        Station { id: 187, x: 542, y: 508 },
         Station { id: 188, x: 600, y: 500 },
         Station { id: 189, x: 75, y: 502 },
 
@@ -272,8 +298,8 @@ fn stations(graph: &mut Graph<Station, ConnectionType>) -> Vec<NodeAddress> {
         Station { id: 195, x: 315, y: 530 },
         Station { id: 196, x: 340, y: 487 },
         Station { id: 197, x: 352, y: 515 },
-        Station { id: 198, x: 515, y: 545 },
-        Station { id: 199, x: 600, y: 530 },
+        Station { id: 198, x: 515, y: 535 },
+        Station { id: 199, x: 600, y: 535 },
 
         // A secret node that cannot be reached.
         Station { id: 200, x: 600, y: 600 },
@@ -464,7 +490,7 @@ fn connect_taxi(graph: &mut Graph<Station, ConnectionType>, stations: &[NodeAddr
     bidir(graph, &stations, 182, [195], ConnectionType::Taxi);
     bidir(graph, &stations, 183, [196], ConnectionType::Taxi);
     bidir(graph, &stations, 184, [185, 197], ConnectionType::Taxi);
-    bidir(graph, &stations, 185, [186, 198], ConnectionType::Taxi);
+    bidir(graph, &stations, 185, [186], ConnectionType::Taxi);
     bidir(graph, &stations, 186, [198], ConnectionType::Taxi);
     bidir(graph, &stations, 187, [188, 198], ConnectionType::Taxi);
     bidir(graph, &stations, 188, [199], ConnectionType::Taxi);
