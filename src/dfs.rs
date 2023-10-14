@@ -49,7 +49,7 @@ impl DepthFirstSearch {
             visited.insert(current_node.address.clone());
 
             let current_node = graph
-                .get_local_node(&current_node.address)
+                .get_local_node_ref(&current_node.address)
                 .expect("remote node lookups are not yet supported");
 
             for relation in &current_node.outgoing {
@@ -79,5 +79,18 @@ mod tests {
         );
 
         assert_eq!(path.len(), 45);
+    }
+
+    #[test]
+    fn unreachable() {
+        let solver = DepthFirstSearch::default();
+        let graph = london_graph();
+        let path = solver.find_path(
+            &graph,
+            NodeAddress::from_local(0),
+            NodeAddress::from_local(199),
+        );
+
+        assert_eq!(path.len(), 0);
     }
 }
