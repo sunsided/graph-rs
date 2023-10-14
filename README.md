@@ -1,6 +1,6 @@
 # Graphs Playground in Rust
 
-A work in progress.
+A work in progress to experiment with graph representation and memory layout.
 
 ## Example Graphs
 
