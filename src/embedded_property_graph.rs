@@ -67,20 +67,20 @@ impl<T, R> EmbeddedPropertyGraph<T, R> {
         NodeAddress::from_local(id)
     }
 
-    /// Gets a node given its [`NodeAddress`] under the condition that the node is locally available.
-    pub(crate) fn get_local_node_ref(
+    /// Iterates the neighbors of a node given its [`NodeAddress`] under the condition that the node is locally available.
+    pub fn iter_local_neighbors(
         &self,
         address: &NodeAddress,
-    ) -> Result<&NodeData<T, R>, NodeAddressError> {
+    ) -> Result<impl Iterator<Item = &NodeRelation<R>>, NodeAddressError> {
         #[allow(unreachable_patterns)]
         match address {
-            NodeAddress::Local(id) => Ok(&self.nodes[*id]),
+            NodeAddress::Local(id) => Ok(self.nodes[*id].outgoing.iter()),
             _ => Err(NodeAddressError::NodeNotLocal(address.clone())),
         }
     }
 
     /// Gets a node's data given its [`NodeAddress`] under the condition that the node is locally available.
-    pub(crate) fn get_local_node_data_ref(
+    pub(crate) fn local_node_data_ref(
         &self,
         address: &NodeAddress,
     ) -> Result<&T, NodeAddressError> {

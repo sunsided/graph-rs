@@ -49,11 +49,11 @@ impl DepthFirstSearch {
 
             visited.insert(current_node.address.clone());
 
-            let current_node = graph
-                .get_local_node_ref(&current_node.address)
+            let neighbors = graph
+                .iter_local_neighbors(&current_node.address)
                 .expect("remote node lookups are not yet supported");
 
-            for relation in &current_node.outgoing {
+            for relation in neighbors {
                 let mut new_path = path.clone();
                 new_path.push(relation.into());
                 stack.push(new_path);

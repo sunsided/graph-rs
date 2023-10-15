@@ -51,10 +51,10 @@ impl AStarSearch {
             start.clone(),
             heuristic.heuristic(
                 &graph
-                    .get_local_node_data_ref(&start)
+                    .local_node_data_ref(&start)
                     .expect("the start node does not exist in the graph"),
                 &graph
-                    .get_local_node_data_ref(&target)
+                    .local_node_data_ref(&target)
                     .expect("the target node does not exist in the graph"),
             ),
         );
@@ -74,18 +74,16 @@ impl AStarSearch {
                 .expect("current node has no g-score");
 
             // Process all neighbors of the current node.
-            let current_node_data = graph.get_local_node_ref(&current_addr).unwrap();
-            for neighbor in current_node_data.outgoing.iter() {
+            let current_node_data = graph.local_node_data_ref(&current_addr).unwrap();
+            let neighbors = graph.iter_local_neighbors(&current_addr).unwrap();
+            for neighbor in neighbors {
                 let neighbor_node = &graph
-                    .get_local_node_data_ref(&neighbor.address)
+                    .local_node_data_ref(&neighbor.address)
                     .expect("the neighbor node does not exist in the graph");
 
                 // Determine actual distance between the current node and the neighbor.
-                let distance_cost = path_cost.path_cost(
-                    &current_node_data.data,
-                    &neighbor_node,
-                    &neighbor.relation,
-                );
+                let distance_cost =
+                    path_cost.path_cost(&current_node_data, &neighbor_node, &neighbor.relation);
 
                 // Determine the true distance to the neighbor node from the current node.
                 let tentative_g_score = current_g_score + distance_cost;
@@ -117,7 +115,7 @@ impl AStarSearch {
                         + heuristic.heuristic(
                             &neighbor_node,
                             &graph
-                                .get_local_node_data_ref(&target)
+                                .local_node_data_ref(&target)
                                 .expect("the target node does not exist in the graph"),
                         );
                     debug_assert!(neighbor_f_score.is_finite());

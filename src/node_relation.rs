@@ -18,9 +18,11 @@ where
 
 /// An internal representation of a node relation.
 #[derive(Debug, Clone)]
-pub(crate) struct NodeRelation<R> {
-    pub(crate) relation: R,
-    pub(crate) address: NodeAddress,
+pub struct NodeRelation<R> {
+    /// The relation that leads to the addressed node.
+    pub relation: R,
+    /// The address of the targeted node.
+    pub address: NodeAddress,
 }
 
 impl<R> From<&NodeRelation<R>> for NodePathLink<R>
