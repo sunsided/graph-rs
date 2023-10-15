@@ -1,5 +1,6 @@
+use crate::embedded_property_graph::EmbeddedPropertyGraph;
 use crate::node_address::NodeAddress;
-use crate::{Graph, NodePathLink};
+use crate::node_relation::NodePathLink;
 use std::collections::HashSet;
 
 /// A depth-first search (DFS) solver for finding a path in a graph.
@@ -20,7 +21,7 @@ impl DepthFirstSearch {
     /// A path from `start` to `target` or an empty vector if no such path exists.
     pub fn find_path<N, R>(
         &self,
-        graph: &Graph<N, R>,
+        graph: &EmbeddedPropertyGraph<N, R>,
         start: NodeAddress,
         target: NodeAddress,
     ) -> Vec<NodePathLink<R>>

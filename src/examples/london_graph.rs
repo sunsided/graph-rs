@@ -2,9 +2,9 @@
 
 #![allow(dead_code)]
 
+use crate::embedded_property_graph::EmbeddedPropertyGraph;
 use crate::node_address::NodeAddress;
-use crate::path_queries::astar::{AdmissibleHeuristic, PathCost};
-use crate::Graph;
+use crate::path_queries::{AdmissibleHeuristic, PathCost};
 
 const MAP_WIDTH: f32 = 760.0;
 const MAP_HEIGHT: f32 = 570.0;
@@ -66,8 +66,8 @@ impl PathCost<Station, ConnectionType> for LondonGraphStationsCost {
     }
 }
 
-pub fn london_graph() -> Graph<Station, ConnectionType> {
-    let mut graph = Graph::default();
+pub fn london_graph() -> EmbeddedPropertyGraph<Station, ConnectionType> {
+    let mut graph = EmbeddedPropertyGraph::default();
 
     let stations = stations(&mut graph);
 
@@ -79,7 +79,7 @@ pub fn london_graph() -> Graph<Station, ConnectionType> {
     graph
 }
 
-fn stations(graph: &mut Graph<Station, ConnectionType>) -> Vec<NodeAddress> {
+fn stations(graph: &mut EmbeddedPropertyGraph<Station, ConnectionType>) -> Vec<NodeAddress> {
     #[rustfmt::skip]
     let stations = [
         Station { id: 1, x: 110, y: 32 },
@@ -312,7 +312,7 @@ fn stations(graph: &mut Graph<Station, ConnectionType>) -> Vec<NodeAddress> {
 }
 
 #[rustfmt::skip]
-fn connect_taxi(graph: &mut Graph<Station, ConnectionType>, stations: &[NodeAddress]) {
+fn connect_taxi(graph: &mut EmbeddedPropertyGraph<Station, ConnectionType>, stations: &[NodeAddress]) {
     bidir(graph, &stations, 1, [8, 9], ConnectionType::Taxi);
     bidir(graph, &stations, 2, [10, 20], ConnectionType::Taxi);
     bidir(graph, &stations, 3, [4, 11, 12], ConnectionType::Taxi);
@@ -506,7 +506,7 @@ fn connect_taxi(graph: &mut Graph<Station, ConnectionType>, stations: &[NodeAddr
 }
 
 #[rustfmt::skip]
-fn connect_bus(graph: &mut Graph<Station, ConnectionType>, stations: &[NodeAddress]) {
+fn connect_bus(graph: &mut EmbeddedPropertyGraph<Station, ConnectionType>, stations: &[NodeAddress]) {
     bidir(graph, &stations, 1, [46, 58], ConnectionType::Bus);
     bidir(graph, &stations, 3, [22, 23], ConnectionType::Bus);
     bidir(graph, &stations, 7, [42], ConnectionType::Bus);
@@ -561,7 +561,7 @@ fn connect_bus(graph: &mut Graph<Station, ConnectionType>, stations: &[NodeAddre
 }
 
 #[rustfmt::skip]
-fn connect_subways(graph: &mut Graph<Station, ConnectionType>, stations: &[NodeAddress]) {
+fn connect_subways(graph: &mut EmbeddedPropertyGraph<Station, ConnectionType>, stations: &[NodeAddress]) {
     bidir(graph, &stations, 1, [46], ConnectionType::Underground);
     bidir(graph, &stations, 13, [46, 67, 89], ConnectionType::Underground);
     bidir(graph, &stations, 46, [74, 79], ConnectionType::Underground);
@@ -575,7 +575,7 @@ fn connect_subways(graph: &mut Graph<Station, ConnectionType>, stations: &[NodeA
 }
 
 #[rustfmt::skip]
-fn connect_ferries(graph: &mut Graph<Station, ConnectionType>, stations: &[NodeAddress]) {
+fn connect_ferries(graph: &mut EmbeddedPropertyGraph<Station, ConnectionType>, stations: &[NodeAddress]) {
     bidir(graph, &stations, 108, [115], ConnectionType::Ferry);
     bidir(graph, &stations, 115, [157], ConnectionType::Ferry);
     bidir(graph, &stations, 157, [194], ConnectionType::Ferry);
@@ -583,7 +583,7 @@ fn connect_ferries(graph: &mut Graph<Station, ConnectionType>, stations: &[NodeA
 
 /// Bidirectionally link nodes.
 fn bidir<L: IntoIterator<Item = usize>>(
-    graph: &mut Graph<Station, ConnectionType>,
+    graph: &mut EmbeddedPropertyGraph<Station, ConnectionType>,
     stations: &[NodeAddress],
     from: usize,
     to: L,

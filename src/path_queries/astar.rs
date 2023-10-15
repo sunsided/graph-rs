@@ -1,28 +1,12 @@
+use crate::embedded_property_graph::EmbeddedPropertyGraph;
 use crate::node_address::NodeAddress;
-use crate::{Graph, NodePathLink};
+use crate::node_relation::NodePathLink;
+use crate::path_queries::{AdmissibleHeuristic, PathCost};
 use std::collections::HashMap;
 
 /// An A* search solver for shortest path queries.
 #[derive(Debug, Default)]
 pub struct AStarSearch;
-
-/// Trait for heuristics.
-pub trait AdmissibleHeuristic<N> {
-    /// Provides a heuristic value for the estimated cost to the target node.
-    ///
-    /// ## Admissible Heuristics
-    /// The heuristic function must be admissible, i.e. never overestimate the true distance.
-    fn heuristic(&self, from: &N, to: &N) -> f32;
-}
-
-/// Trait for path costs.
-pub trait PathCost<N, R> {
-    /// Provides a value for the actual cost to the target node.
-    ///
-    /// This function is mainly used to determine the cost to move to a neighbor node.
-    /// If there is no path to the target node, the returned cost should be [`f32::INFINITY`].
-    fn path_cost(&self, from: &N, to: &N, relation: &R) -> f32;
-}
 
 impl AStarSearch {
     /// Performs a shortest path query on the specified graph,
@@ -39,7 +23,7 @@ impl AStarSearch {
     /// A path from `start` to `target` or an empty vector if no such path exists.
     pub fn shortest_path<N, R, P, H>(
         &self,
-        graph: &Graph<N, R>,
+        graph: &EmbeddedPropertyGraph<N, R>,
         start: NodeAddress,
         target: NodeAddress,
         path_cost: &P,
@@ -67,13 +51,11 @@ impl AStarSearch {
             start.clone(),
             heuristic.heuristic(
                 &graph
-                    .get_local_node_ref(&start)
-                    .expect("the start node does not exist in the graph")
-                    .data,
+                    .get_local_node_data_ref(&start)
+                    .expect("the start node does not exist in the graph"),
                 &graph
-                    .get_local_node_ref(&target)
-                    .expect("the target node does not exist in the graph")
-                    .data,
+                    .get_local_node_data_ref(&target)
+                    .expect("the target node does not exist in the graph"),
             ),
         );
 
@@ -95,9 +77,8 @@ impl AStarSearch {
             let current_node_data = graph.get_local_node_ref(&current_addr).unwrap();
             for neighbor in current_node_data.outgoing.iter() {
                 let neighbor_node = &graph
-                    .get_local_node_ref(&neighbor.address)
-                    .expect("the neighbor node does not exist in the graph")
-                    .data;
+                    .get_local_node_data_ref(&neighbor.address)
+                    .expect("the neighbor node does not exist in the graph");
 
                 // Determine actual distance between the current node and the neighbor.
                 let distance_cost = path_cost.path_cost(
@@ -136,9 +117,8 @@ impl AStarSearch {
                         + heuristic.heuristic(
                             &neighbor_node,
                             &graph
-                                .get_local_node_ref(&target)
-                                .expect("the target node does not exist in the graph")
-                                .data,
+                                .get_local_node_data_ref(&target)
+                                .expect("the target node does not exist in the graph"),
                         );
                     debug_assert!(neighbor_f_score.is_finite());
 

@@ -2,7 +2,7 @@
 
 #![allow(dead_code)]
 
-use crate::Graph;
+use crate::embedded_property_graph::EmbeddedPropertyGraph;
 
 #[derive(Debug)]
 pub enum NodeType {
@@ -50,8 +50,8 @@ pub struct Review {
     rating: u8,
 }
 
-pub fn movie_graph() -> Graph<NodeType, RelationType> {
-    let mut graph = Graph::default();
+pub fn movie_graph() -> EmbeddedPropertyGraph<NodeType, RelationType> {
+    let mut graph = EmbeddedPropertyGraph::default();
 
     // The Matrix
     let matrix = graph.add(NodeType::Movie(Movie {

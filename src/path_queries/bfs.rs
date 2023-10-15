@@ -1,5 +1,6 @@
+use crate::embedded_property_graph::EmbeddedPropertyGraph;
 use crate::node_address::NodeAddress;
-use crate::{Graph, NodePathLink};
+use crate::node_relation::NodePathLink;
 use std::collections::{HashSet, VecDeque};
 
 /// A breadth-first search (BFS) solver for shortest path queries.
@@ -21,7 +22,7 @@ impl BreadthFirstSearch {
     /// A path from `start` to `target` or an empty vector if no such path exists.
     pub fn shortest_path<N, R>(
         &self,
-        graph: &Graph<N, R>,
+        graph: &EmbeddedPropertyGraph<N, R>,
         start: NodeAddress,
         target: NodeAddress,
     ) -> Vec<NodePathLink<R>>
