@@ -1,5 +1,6 @@
 //! Provides a property graph type that embeds node relations into the node itself.
 
+use crate::errors::NodeAddressError;
 use crate::node_address::NodeAddress;
 use crate::node_relation::NodeRelation;
 use std::borrow::Borrow;
@@ -132,12 +133,6 @@ impl<T, R> Default for EmbeddedPropertyGraph<T, R> {
     fn default() -> Self {
         EmbeddedPropertyGraph { nodes: Vec::new() }
     }
-}
-
-#[derive(Debug, Clone, thiserror::Error)]
-pub enum NodeAddressError {
-    #[error("The specified node address does not represent a local node: {0}")]
-    NodeNotLocal(NodeAddress),
 }
 
 #[cfg(test)]
